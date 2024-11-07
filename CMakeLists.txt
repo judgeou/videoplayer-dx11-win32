@@ -5,11 +5,23 @@ project(videoplayer-dx11-win32 VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 编译选项
+# 设置默认构建类型为 Debug
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# 根据构建类型设置编译选项
 if(MSVC)
     add_compile_options(/W4 /MP)
     # 启用多线程编译
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    
+    # Debug 模式选项
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /Od")
+    
+    # Release 模式优化选项
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /GL")
+    set(CMAKE_LINK_FLAGS_RELEASE "${CMAKE_LINK_FLAGS_RELEASE} /LTCG")
 endif()
 
 # 源文件
