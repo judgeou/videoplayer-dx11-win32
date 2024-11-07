@@ -1,0 +1,12 @@
+{
+    "name": "videoplayer-dx11-win32",
+    "version": "0.1.0",
+    "dependencies": [
+        "ffmpeg",
+        "imgui",
+        {
+            "name": "imgui",
+            "features": ["dx11-binding"]
+        }
+    ]
+}
