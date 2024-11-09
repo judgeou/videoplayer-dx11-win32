@@ -121,9 +121,23 @@ int WINAPI WinMain(
 
     // 消息循环
     MSG msg = {};
-    while (GetMessage(&msg, nullptr, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+    bool running = true;
+    while (running) {
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                running = false;
+                break;
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        
+        // 直接渲染
+        if (videoState.frameBuffer && videoState.renderer) {
+            videoState.renderer->Render(videoState.frameBuffer);
+            videoState.ui->Render();
+            videoState.renderer->Present(1);
+        }
     }
 
     return 0;
@@ -136,15 +150,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     }
 
     switch (uMsg) {
-        case WM_PAINT: {
-            if (videoState.frameBuffer && videoState.renderer) {
-                videoState.renderer->Render(videoState.frameBuffer);
-                videoState.ui->Render();
-                videoState.renderer->Present(1);
-            }
-            return 0;
-        }
-        
         case WM_SIZE: {
             if (videoState.renderer) {
                 // 获取新的窗口尺寸
@@ -152,7 +157,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 UINT height = HIWORD(lParam);
                 videoState.renderer->Resize(width, height);
             }
-            InvalidateRect(hwnd, NULL, TRUE);
+            // if (videoState.frameBuffer && videoState.renderer) {
+            //     videoState.renderer->Render(videoState.frameBuffer);
+            //     videoState.ui->Render();
+            //     videoState.renderer->Present(1);
+            // }
             return 0;
         }
         
