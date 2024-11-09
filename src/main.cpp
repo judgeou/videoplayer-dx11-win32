@@ -127,6 +127,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         }
         
         case WM_SIZE: {
+            if (videoState.renderer) {
+                // 获取新的窗口尺寸
+                UINT width = LOWORD(lParam);
+                UINT height = HIWORD(lParam);
+                videoState.renderer->Resize(width, height);
+            }
             InvalidateRect(hwnd, NULL, TRUE);
             return 0;
         }

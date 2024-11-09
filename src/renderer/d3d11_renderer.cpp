@@ -93,10 +93,32 @@ void D3D11Renderer::Render(const uint8_t* frameData) {
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     d3dContext->ClearRenderTargetView(renderTargetView, clearColor);
     
-    // 设置视口
+    // 获取后备缓冲区的尺寸
+    ID3D11Texture2D* backBuffer;
+    swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
+    D3D11_TEXTURE2D_DESC backBufferDesc;
+    backBuffer->GetDesc(&backBufferDesc);
+    backBuffer->Release();
+
+    // 计算保持宽高比的视口尺寸
+    float aspectRatio = (float)textureWidth / textureHeight;
+    float windowAspectRatio = (float)backBufferDesc.Width / backBufferDesc.Height;
+    
     D3D11_VIEWPORT viewport = {};
-    viewport.Width = (float)textureWidth;
-    viewport.Height = (float)textureHeight;
+    if (windowAspectRatio > aspectRatio) {
+        // 窗口较宽，以高度为基准
+        viewport.Height = (float)backBufferDesc.Height;
+        viewport.Width = viewport.Height * aspectRatio;
+        viewport.TopLeftX = (backBufferDesc.Width - viewport.Width) / 2;
+        viewport.TopLeftY = 0;
+    } else {
+        // 窗口较高，以宽度为基准
+        viewport.Width = (float)backBufferDesc.Width;
+        viewport.Height = viewport.Width / aspectRatio;
+        viewport.TopLeftX = 0;
+        viewport.TopLeftY = (backBufferDesc.Height - viewport.Height) / 2;
+    }
+    
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
     d3dContext->RSSetViewports(1, &viewport);
@@ -294,8 +316,6 @@ void D3D11Renderer::Resize(int width, int height) {
 
     // 释放旧的资源
     if (renderTargetView) renderTargetView->Release();
-    if (videoTexture) videoTexture->Release();
-    if (videoTextureView) videoTextureView->Release();
 
     // 调整交换链大小
     swapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
@@ -305,11 +325,4 @@ void D3D11Renderer::Resize(int width, int height) {
     swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
     d3dDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
     backBuffer->Release();
-
-    // 更新纹理尺寸
-    textureWidth = width;
-    textureHeight = height;
-
-    // 重新创建纹理
-    CreateTextures(width, height);
 }
