@@ -146,6 +146,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             PostQuitMessage(0);
             return 0;
         }
+
+        case WM_SETCURSOR: {
+            // 当鼠标在客户区时，设置为默认箭头光标
+            if (LOWORD(lParam) == HTCLIENT) {
+                SetCursor(LoadCursor(NULL, IDC_ARROW));
+                return TRUE;  // 返回TRUE表示我们已经处理了这个消息
+            }
+            break;  // 对于非客户区，使用默认处理
+        }
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
