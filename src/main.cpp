@@ -1,4 +1,6 @@
-#include <imgui.h>
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
 #include <Windows.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -14,6 +16,7 @@ extern "C" {
 }
 #include "decoder/ffmpeg_decoder.hpp"
 #include "renderer/d3d11_renderer.hpp"
+#include "ui/player_ui.hpp"
 
 // 添加全局变量用于存储视频帧
 struct VideoState {
@@ -21,6 +24,7 @@ struct VideoState {
     int width;
     int height;
     std::unique_ptr<D3D11Renderer> renderer;
+    std::unique_ptr<PlayerUI> ui;
 } videoState;
 
 bool InitD3D11(HWND hwnd);
@@ -33,6 +37,11 @@ bool DecodeFirstFrame(const wchar_t* filename) {
     }
     
     return decoder.DecodeFirstFrame(&videoState.frameBuffer, &videoState.width, &videoState.height);
+}
+
+bool InitImGui(HWND hwnd, D3D11Renderer* renderer) {
+    videoState.ui = std::make_unique<PlayerUI>();
+    return videoState.ui->Initialize(hwnd, renderer);
 }
 
 // 窗口过程函数声明
@@ -102,6 +111,10 @@ int WINAPI WinMain(
         MessageBoxW(NULL, L"初始化 D3D11 失败", L"错误", MB_OK | MB_ICONERROR);
         return 1;
     }
+    if (!InitImGui(hwnd, videoState.renderer.get())) {
+        MessageBoxW(NULL, L"初始化 ImGui 失败", L"错误", MB_OK | MB_ICONERROR);
+        return 1;
+    }
 
     // 显示窗口
     ShowWindow(hwnd, SW_SHOW);
@@ -118,10 +131,16 @@ int WINAPI WinMain(
 
 // 窗口过程函数实现
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (videoState.ui && videoState.ui->HandleMessage(hwnd, uMsg, wParam, lParam)) {
+        return true;
+    }
+
     switch (uMsg) {
         case WM_PAINT: {
             if (videoState.frameBuffer && videoState.renderer) {
                 videoState.renderer->Render(videoState.frameBuffer);
+                videoState.ui->Render();
+                videoState.renderer->Present(1);
             }
             return 0;
         }
@@ -142,6 +161,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 free(videoState.frameBuffer);
                 videoState.frameBuffer = nullptr;
             }
+            videoState.ui.reset();
             videoState.renderer.reset();
             PostQuitMessage(0);
             return 0;

@@ -16,16 +16,18 @@ public:
 
     bool Initialize(HWND hwnd, int width, int height);
     void Render(const uint8_t* frameData);
+    void Present(int syncInterval);
     void Resize(int width, int height);
     void Cleanup();
+
+    ID3D11Device* GetDevice() const { return d3dDevice; }
+    ID3D11DeviceContext* GetContext() const { return d3dContext; }
 
 private:
     bool CreateShaders();
     bool CreateBuffers();
     bool CreateTextures(int width, int height);
 
-    ID3D11Device* d3dDevice = nullptr;
-    ID3D11DeviceContext* d3dContext = nullptr;
     IDXGISwapChain* swapChain = nullptr;
     ID3D11RenderTargetView* renderTargetView = nullptr;
     ID3D11Texture2D* videoTexture = nullptr;
@@ -39,4 +41,7 @@ private:
 
     int textureWidth = 0;
     int textureHeight = 0;
+
+    ID3D11Device* d3dDevice = nullptr;
+    ID3D11DeviceContext* d3dContext = nullptr;
 };

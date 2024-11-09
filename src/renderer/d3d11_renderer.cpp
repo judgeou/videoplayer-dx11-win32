@@ -139,9 +139,10 @@ void D3D11Renderer::Render(const uint8_t* frameData) {
     
     // 绘制
     d3dContext->DrawIndexed(6, 0, 0);
-    
-    // 呈现
-    swapChain->Present(1, 0);
+}
+
+void D3D11Renderer::Present(int syncInterval) {
+    swapChain->Present(syncInterval, 0);
 }
 
 bool D3D11Renderer::CreateShaders() {
